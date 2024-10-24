@@ -1,0 +1,3 @@
+[submodule "GNH_BRaVa_dev_misc"]
+	path = GNH_BRaVa_dev_misc
+	url = git@github.com:giorkala/GNH_BRaVa_dev_misc.git
