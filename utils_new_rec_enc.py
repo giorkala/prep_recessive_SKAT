@@ -1,4 +1,4 @@
-# rank_consq = {v: k for k, v in worst_consq.items()}
+# ranking of consequences for pairs of variants (less is worse)
 rank_consq = {
     'pLoF': 1,
     'pLoF|pLoF': 2,

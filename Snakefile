@@ -41,6 +41,8 @@ annot_saige_prefix=f"{parent_dir}/brava_vep_annotation/vep105_loftee/out/gnh_39k
 maf_prefix=f"{WORK_DIR}/input/GNH_39k_QC.notrios"
 # this was obtained during the phasing process; should end in ".chr{C}.snpinfo"
 
+final_prefix = f"{WORK_DIR}/output/{TAG}.reskat"
+
 import os
 for d in ["sandbox", "output", "logs"]:
     os.makedirs(f"{WORK_DIR}/{d}", exist_ok=True)
@@ -132,4 +134,29 @@ rule run_all:
         expand(WORK_DIR+"/sandbox/biallelic.{tag}.merged.chr{chrom}.txt", chrom=range(1,23), tag={TAG}),
         expand(WORK_DIR+"/output/{tag}.chr{chrom}.txt", chrom=range(20,23), tag={TAG}),
         expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(22,23), tag={TAG})
-      
+
+rule last_steps:
+    input:
+        expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(21,23), tag={TAG})
+    output:
+        bgen = final_prefix+".bgen",
+        vcf = final_prefix+".vcf.gz",
+        sample = final_prefix+".sample"
+    params:
+        prefix = final_prefix
+    shell:
+        """
+        source /etc/profile.d/modules.sh
+        module load HGI/softpack/users/bh18/bcftools/1.0
+
+        files_to_concat={params.prefix}.files.txt
+        rm -f $files_to_concat
+        for c in $(seq 21 22); do echo {params.prefix}.chr$c.vcf.gz >> $files_to_concat; done
+        bcftools concat -f $files_to_concat -Oz -o {output.vcf}
+
+        plink2 --export bgen-1.2 bits=8 --vcf {output.vcf} dosage=DS --out {params.prefix}
+        # fix the .sample file
+        head -2 {output.sample} > {params.prefix}.sample1
+        awk 'NR>2{{print 1,$2,0,0}}' {params.prefix}.sample >> {params.prefix}.sample1
+        mv {params.prefix}.sample1 {output.sample}
+        """

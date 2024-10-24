@@ -1,9 +1,9 @@
 #!/bin/python
 """
 ## Genotype preparation for Recessive SKAT v2 ##
-based on pseudo-variants for biallelic genotypes
 
-Read a list of biallelic genotypes and make a VCF file, to use in downstream analyses
+Based on pseudo-variants for biallelic genotypes. Reads a list of biallelic genotypes and makes a VCF file, to use in downstream analyses. 
+Could also be used with any list of dosages (though only {0,1} will be considered).
 
 Note: might be slow as it's not optimised
 
@@ -31,7 +31,7 @@ geno_samples_list = geno_samples_list[['ID','Marker']]
 samples_all = pd.read_csv(args.samples, sep='\t', header=None) #[0].values
 samples_all['index'] = range(samples_all.shape[0])
 samples_all.set_index(0, inplace=True)
-print(f"\Generating VCF for {len(samples_all)} samples")
+print(f"\nGenerating VCF for {len(samples_all)} samples")
 
 geno_markers_dict = {}
 for sampleID, markerID in geno_samples_list.to_numpy():
@@ -77,3 +77,4 @@ with gzip.open( args.out, 'wb' ) as fout:
 assert total_AC == len(geno_samples_list), "Something went wrong with the genotype annotation."
 
 print("Done, total AC=", total_AC)
+# end-of-script
