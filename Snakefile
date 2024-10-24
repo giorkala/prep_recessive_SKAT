@@ -28,20 +28,17 @@ GK - Oct 24th, 2024
 min_AC=5 # minimum number of carriers per gene
 max_AF=0.05 # maximum allele frequency per variant
 TAG="brava_s50" # tag to identify the output files
-cohort="GNH_39k_QC" # cohort identifier
 
 ## General file paths and prefices ##
-parent_dir="/lustre/scratch123/hgi/mdt2/projects/gnh_industry/Genes_and_Health_2023_02_44k"
-WORK_DIR="/FIXTHIS/PATH"
+parent_dir="FIXTHIS/PATH"
+WORK_DIR="FIXTHIS/PATH"
 bcf_prefix="FIXTHIS/PATH/phased_genotypes/biobank_tag.notrios.phased_all"
-WORK_DIR=f"{parent_dir}/phasing/dev_new_rec"
-bcf_prefix=f"{parent_dir}/phasing/phased_genotypes/GNH_39k_QC.notrios.phased_all"
 annot_saige_prefix=f"{parent_dir}/brava_vep_annotation/vep105_loftee/out/gnh_39k.brava_s50_nopopmax"
 # this is the output from BRaVa's variant annotation; should end in ".chr{C}.saige.txt"
 maf_prefix=f"{WORK_DIR}/input/GNH_39k_QC.notrios"
 # this was obtained during the phasing process; should end in ".chr{C}.snpinfo"
 
-final_prefix = f"{WORK_DIR}/output/{TAG}.reskat"
+final_prefix = f"{WORK_DIR}/output/{TAG}"
 
 import os
 for d in ["sandbox", "output", "logs"]:
@@ -128,35 +125,36 @@ rule generate_vcf:
         python generate_vcf.py -s {params.samples} -c {params.C} -g {input} -o {output}
         """
 
-rule run_all:
+rule run_specific:
     input:
         expand(WORK_DIR+"/sandbox/chr{chrom}.PP90af05.txt.gz", chrom=range(1,23), tag={TAG}),
         expand(WORK_DIR+"/sandbox/biallelic.{tag}.merged.chr{chrom}.txt", chrom=range(1,23), tag={TAG}),
         expand(WORK_DIR+"/output/{tag}.chr{chrom}.txt", chrom=range(20,23), tag={TAG}),
         expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(22,23), tag={TAG})
 
-rule last_steps:
+rule run_all:
+    # this needs bcftools and PLINK2; make sure these are available
     input:
-        expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(21,23), tag={TAG})
+        expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(1,23), tag={TAG})
     output:
-        bgen = final_prefix+".bgen",
-        vcf = final_prefix+".vcf.gz",
-        sample = final_prefix+".sample"
+        bgen = final_prefix+".chrALL.bgen",
+        vcf = final_prefix+".chrALL.vcf.gz",
+        sample = final_prefix+".chrALL.sample"
     params:
         prefix = final_prefix
     shell:
         """
-        source /etc/profile.d/modules.sh
-        module load HGI/softpack/users/bh18/bcftools/1.0
-
+        # source /etc/profile.d/modules.sh
+        # module load HGI/softpack/users/bh18/bcftools/1.0
         files_to_concat={params.prefix}.files.txt
         rm -f $files_to_concat
         for c in $(seq 21 22); do echo {params.prefix}.chr$c.vcf.gz >> $files_to_concat; done
         bcftools concat -f $files_to_concat -Oz -o {output.vcf}
 
-        plink2 --export bgen-1.2 bits=8 --vcf {output.vcf} dosage=DS --out {params.prefix}
+        plink2 --export bgen-1.2 bits=8 --vcf {output.vcf} dosage=DS --out {params.prefix}.chrALL
+
         # fix the .sample file
-        head -2 {output.sample} > {params.prefix}.sample1
-        awk 'NR>2{{print 1,$2,0,0}}' {params.prefix}.sample >> {params.prefix}.sample1
-        mv {params.prefix}.sample1 {output.sample}
+        head -2 {output.sample} > {output.sample}.tmp
+        awk 'NR>2{{print 1,$2,0,0}}' {params.prefix}.sample >> {output.sample}.tmp
+        mv {output.sample}.tmp {output.sample}
         """

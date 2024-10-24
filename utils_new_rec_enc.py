@@ -1,3 +1,6 @@
+import numpy as np
+from scipy.stats import beta
+
 # ranking of consequences for pairs of variants (less is worse)
 rank_consq = {
     'pLoF': 1,
@@ -53,3 +56,62 @@ def get_freq_product( markers, df_maf ):
         return 2 * a * b
     else:
         return df_maf.loc[markers].MAF ** 2
+    
+
+new_labels = {
+    'pLoF': 'pLoF',
+    'pLoF|pLoF': 'pLoF|pLoF',
+    'pLoF|damaging_missense': 'pLoF|damaging_missense',
+    'damaging_missense|pLoF': 'pLoF|damaging_missense',
+    'pLoF|other_missense': 'pLoF|other_missense',
+    'other_missense|pLoF': 'pLoF|other_missense',
+    'damaging_missense': 'damaging_missense',
+    'damaging_missense|damaging_missense': 'damaging_missense|damaging_missense',
+    'damaging_missense|other_missense': 'damaging_missense|other_missense',
+    'other_missense|damaging_missense': 'damaging_missense|other_missense',
+    'other_missense|other_missense': 'other_missense|other_missense',
+    'other_missense': 'other_missense',
+    'other_missense|other_missense': 'other_missense|other_missense',
+    'pLoF|synonymous': 'NA',
+    'pLoF|synonymous': 'NA',
+    'damaging_missense|synonymous': 'NA',
+    'synonymous|damaging_missense': 'NA',
+    'other_missense|synonymous': 'NA',
+    'synonymous|other_missense': 'NA',
+    'synonymous': 'synonymous',
+    'synonymous|synonymous': 'synonymous'
+}
+
+new_weights = {
+    'synonymous|synonymous': 0.05,
+    'synonymous': 0.05,
+    'other_missense': 0.025,
+    'other_missense|other_missense': 0.025,
+    'other_missense|damaging_missense': 0.025,
+    'damaging_missense|damaging_missense': 0.025,
+    'damaging_missense|damaging_missense': 0.01,
+    'damaging_missense': 0.01,
+    'other_missense|pLoF': 0.01,
+    'pLoF': 0.001,
+    'pLoF|damaging_missense': 0.001,
+    'pLoF|pLoF': 0.001,
+    'damaging_missense|pLoF': 0.001
+}
+
+def annot_relabelling(x):
+    return new_labels[x]
+
+# weighting scemes - suggested: set_weights
+# to be used like df['weights'] = df.worst_consq.apply(lambda x: set_weights(x))
+
+def set_weights(x, new_weights=new_weights):
+    return beta.pdf(new_weights[x], 1, 25)
+
+def set_random_weights(x):
+    return beta.pdf(np.random.rand()/20, 1, 25)
+
+def set_uniform_weights(x):
+    return beta.pdf(1, 1, 25)
+
+def set_af_weights(x):
+    return beta.pdf(x, 1, 25)
