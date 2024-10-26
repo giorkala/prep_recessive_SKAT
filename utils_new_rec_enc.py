@@ -104,7 +104,7 @@ def annot_relabelling(x):
 # weighting scemes - suggested: set_weights
 # to be used like df['weights'] = df.worst_consq.apply(lambda x: set_weights(x))
 
-def set_weights(x, new_weights=new_weights):
+def set_class_weights(x, new_weights=new_weights):
     return beta.pdf(new_weights[x], 1, 25)
 
 def set_random_weights(x):
@@ -115,3 +115,24 @@ def set_uniform_weights(x):
 
 def set_af_weights(x):
     return beta.pdf(x, 1, 25)
+    
+def write_saige_file(df, out_file, col_snp='SNP', col_gene='Gene', col_consq='Consq', col_weights='weight'):
+    # write the SAIGE group file to disk
+    print(f"Saving the annotation to {out_file}")
+    with open(out_file, 'w') as fout:
+        for gene_id, variants in df.groupby(col_gene):
+            annotated = ~variants[col_consq].isna()
+            
+            snps = ' '.join(
+                [snp for snp in variants[col_snp][annotated].values]
+            )
+            annos = ' '.join(
+                [anno for anno in variants[col_consq][annotated].values]
+            )
+            weights = ' '.join(
+                [f'{w:.4f}' for w in variants[col_weight][annotated].values]
+            )
+            
+            fout.write(f"{gene_id} var {snps}\n")
+            fout.write(f"{gene_id} anno {annos}\n")
+            fout.write(f"{gene_id} weight {weights}\n")
