@@ -116,7 +116,7 @@ def set_uniform_weights(x):
 def set_af_weights(x):
     return beta.pdf(x, 1, 25)
     
-def write_saige_file(df, out_file, col_snp='SNP', col_gene='Gene', col_consq='Consq', col_weights='weight'):
+def write_saige_file(df, out_file, col_snp='SNP', col_gene='Gene', col_consq='Consq', col_weight='weight'):
     # write the SAIGE group file to disk
     print(f"Saving the annotation to {out_file}")
     with open(out_file, 'w') as fout:

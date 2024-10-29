@@ -53,8 +53,10 @@ rule extract_genotypes:
         max_AF = max_AF
     shell:
         """
-        source /etc/profile.d/modules.sh
-        module load HGI/softpack/users/bh18/bcftools/1.0
+        # FIXTHIS module load bcftools 
+        # source /etc/profile.d/modules.sh
+        # module load HGI/softpack/users/bh18/bcftools/1.0
+
         echo "Generating a file with all genotypes. This can be slow..."
         # select all heterozygous genotypes with PP>0.90 or missing (which implies a common variant)
         bcftools view {input.bcf} --max-af {params.max_AF} | bcftools query -i '(GT="1|1" | GT="0|1" | GT="1|0")' -f'[%SAMPLE %CHROM:%POS:%REF:%ALT %GT %PP\n]' | awk '(length($2)<50)' | awk '($4=="." || $4>0.90)' | gzip > {output}
@@ -100,9 +102,9 @@ rule get_recessive_encoding:
         maf_file = maf_prefix+".chr{chrom}.snpinfo"
     output:
         genotypes = WORK_DIR+"/output/{TAG}.chr{chrom}.txt",
-        annot = WORK_DIR+"/output/{TAG}.chr{chrom}.annotation.txt",
-        set_list = WORK_DIR+"/output/{TAG}.chr{chrom}.set_list.txt",
-        markers = WORK_DIR+"/output/{TAG}.chr{chrom}.marker.info"
+        annot = WORK_DIR+"/output/{TAG}.chr{chrom}.regenie_annotation.txt",
+        set_list = WORK_DIR+"/output/{TAG}.chr{chrom}.groupFile.txt",
+        markers = WORK_DIR+"/output/{TAG}.chr{chrom}.marker_info.txt"
     params:
         C = lambda wildcards: wildcards.chrom,
         out_prefix = WORK_DIR+"/output/"+TAG+".chr{chrom}"
@@ -142,19 +144,26 @@ rule run_all:
         sample = final_prefix+".chrALL.sample"
     params:
         prefix = final_prefix
+    resources:
+        mem_mb=8000,
+        threads=2
     shell:
         """
+        # FIXTHIS module load bcftools plink2
         # source /etc/profile.d/modules.sh
         # module load HGI/softpack/users/bh18/bcftools/1.0
+
         files_to_concat={params.prefix}.files.txt
         rm -f $files_to_concat
-        for c in $(seq 21 22); do echo {params.prefix}.chr$c.vcf.gz >> $files_to_concat; done
-        bcftools concat -f $files_to_concat -Oz -o {output.vcf}
+        for c in $(seq 1 22); do echo {params.prefix}.chr$c.vcf.gz >> $files_to_concat; done
+        bcftools concat -f $files_to_concat -Oz -o {output.vcf} --threads {resources.threads}
 
-        plink2 --export bgen-1.2 bits=8 --vcf {output.vcf} dosage=DS --out {params.prefix}.chrALL
+        plink2 --export bgen-1.2 bits=8 --vcf {output.vcf} dosage=DS \
+            --out {params.prefix}.chrALL \
+            --memory {resources.mem_mb} --threads {resources.threads}
 
         # fix the .sample file
         head -2 {output.sample} > {output.sample}.tmp
-        awk 'NR>2{{print 1,$2,0,0}}' {params.prefix}.sample >> {output.sample}.tmp
+        awk 'NR>2{{print 1,$2,0,0}}' {output.sample} >> {output.sample}.tmp
         mv {output.sample}.tmp {output.sample}
         """

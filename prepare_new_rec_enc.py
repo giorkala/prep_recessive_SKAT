@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 pd.options.mode.copy_on_write = True
 import argparse
-from utils_new_rec_enc import get_worst_consequence, get_freq_product
+from utils_new_rec_enc import get_worst_consequence, get_freq_product, write_saige_file, set_class_weights
 
 parser = argparse.ArgumentParser(description="Genotype preparation for Recessive SKAT v2.")
 parser.add_argument("--anno", "-a", help="file with variant-gene annotation (as in Regenie)", required=True, type=str)
@@ -69,12 +69,16 @@ if gene_index['geneID'].nunique() != gene_index.shape[0]:
 # geno_samples_list = pd.DataFrame()
 df_markers = pd.DataFrame(columns=['gtype_ID', 'worst_gtype', 'worst_consq', 'count', 'freq'])
 geno_total = 0
+duplicated = []
 for gene in gene_index.index:
 
     df_tmp = df.query('Gene == @gene')
     df_tmp.reset_index(inplace=True, drop=True)
 
     gene_annot = df_annot.query('Gene==@gene').set_index('SNP')['Consq']
+    # drop duplicated variants - TODO: check for potential issues
+    duplicated.append(sum(gene_annot.index.duplicated()))
+    gene_annot = gene_annot[~gene_annot.index.duplicated()]
 
     # get the worst consequence for each genotype and all combinations
     things = df_tmp.Variants.apply(lambda x: get_worst_consequence(x, gene_annot))
@@ -89,7 +93,7 @@ for gene in gene_index.index:
     df_sum['Gene'] = gene
     # save the marker info
     df_markers = pd.concat([df_markers, df_sum[['gtype_ID', 'worst_consq', 'Gene']] ])
-    df_sum[['gtype_ID', 'worst_gtype', 'worst_consq', 'count', 'freq']].to_csv( output_prefix+'.marker.info', 
+    df_sum[['gtype_ID', 'worst_gtype', 'worst_consq', 'count', 'freq']].to_csv( output_prefix+'.marker_info.txt', 
                                                                             mode='a', header=False, sep='\t', index=False)
 
     # update the original list of genotypes and save to disk
@@ -130,24 +134,28 @@ def annot_relabelling(x):
     return new_labels[x]
 
 df_markers['consq'] = df_markers.worst_consq.apply(lambda x: annot_relabelling(x))
-df_markers[['gtype_ID','Gene','consq']].to_csv( output_prefix+'.annotation.txt', sep='\t', index=False, mode='a', header=None)
+df_markers[['gtype_ID','Gene','consq']].to_csv( output_prefix+'.regenie_annotation.txt', sep='\t', index=False, mode='a', header=None)
 
-POS_all = []
-weird = []
-with open(f'{output_prefix}.set_list.txt', 'w') as fout:
-    for gene in df_markers.Gene.unique():
-        snps = df_markers.query('Gene == @gene').gtype_ID.values
-        chrom = snps[0].split(':')[0]
-        POS = min([int(x.split(':')[1]) for x in snps])
-        if POS in POS_all:
-            POS += 1
-            POS_all.append(POS) 
-            weird.append(gene)
+df_markers['Weight'] = df_markers.worst_consq.apply(lambda x: set_class_weights(x))
+df_markers = df_markers[['gtype_ID', 'Gene', 'consq', 'Weight']]
+write_saige_file(df_markers, output_prefix + '.groupFile.txt', col_consq='consq', col_snp='gtype_ID')
 
-        fout.write(f'{gene}\t{chrom}\t{POS}\t' + ','.join(snps) + '\n')
+# POS_all = []
+# weird = []
+# with open(f'{output_prefix}.set_list.txt', 'w') as fout:
+#     for gene in df_markers.Gene.unique():
+#         snps = df_markers.query('Gene == @gene').gtype_ID.values
+#         chrom = snps[0].split(':')[0]
+#         POS = min([int(x.split(':')[1]) for x in snps])
+#         if POS in POS_all:
+#             POS += 1
+#             POS_all.append(POS) 
+#             weird.append(gene)
 
-if len(weird) > 0:
-    print("WARNING: the following genes have overlapping POS:", weird)
+#         fout.write(f'{gene}\t{chrom}\t{POS}\t' + ','.join(snps) + '\n')
+
+# if len(weird) > 0:
+#     print("WARNING: the following genes have overlapping POS:", weird)
 
 print("All done! Proceed to the next step.")
     
