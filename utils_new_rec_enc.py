@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import beta
+# from scipy.stats import beta
     
 def write_saige_file(df, out_file, col_snp='SNP', col_gene='Gene', 
                      col_consq='Consq', col_weight='Weight'):
