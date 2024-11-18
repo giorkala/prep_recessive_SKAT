@@ -26,6 +26,7 @@ parser = argparse.ArgumentParser(description="Genotype preparation for Recessive
 parser.add_argument("--anno", "-a", help="file with variant-gene annotation (as in Regenie)", required=True, type=str)
 parser.add_argument("--chrom", "-c", help="chromosome index", required=True, type=int)
 parser.add_argument("--maf", "-m", help="file to MAFs", required=True, type=str, default=None)
+parser.add_argument("--maf_header", help="header available in the MAF file, e.g. if from PLINK", required=True, action='store_true', default=False)
 parser.add_argument("--genotypes", "-g", help="list of genotypes (output from call_chets)", required=False, type=str)
 parser.add_argument("--tag", "-t", help="marker identifier", required=True, type=str, default='nonsyn')
 parser.add_argument("--out", "-o", help="prefix for any output", required=True, type=str)
@@ -45,9 +46,14 @@ df_annot = pd.read_csv( args.anno, sep='\s+', names=['SNP','Gene','Consq'])
 df_annot.replace({'other_missense_or_protein_altering':'other_missense',
                   'damaging_missense_or_protein_altering':'damaging_missense'}, inplace=True)
 
-df_maf = pd.read_csv( args.maf, sep='\t', header=None).set_index(0)
-if 'MAF' not in df_maf.columns:
-    df_maf['MAF'] = df_maf[3] / df_maf[4] / 2
+if args.maf_header:
+   df_maf = pd.read_csv( args.maf, sep='\t' ).set_index('ID')
+   assert 'MAF' in df_maf.columns, 'Mismatch with the MAF file header!'
+   df_maf['MAF'] = df_maf.ALT_FREQS.values
+else:
+   df_maf = pd.read_csv( args.maf, sep='\t', header=None).set_index(0)
+   # assuming MAF is the fourth column...
+   df_maf['MAF'] = df_maf[3] / df_maf[4] / 2
 
 df = pd.read_csv( args.genotypes, sep='\t', header=None)
 df.columns= ['ID','CHR','Gene','GT','AC','Variants']
