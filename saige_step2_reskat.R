@@ -23,7 +23,7 @@ opts = parse_args(opt_parser)
 SPAGMMATtest(
     bedFile=paste(opts$bfile, '.bed', sep=''),
     bimFile=paste(opts$bfile, '.bim', sep=''),
-    famFile=paste(opts$bfile, '.fam', sep='')
+    famFile=paste(opts$bfile, '.fam', sep=''),
     bgenFile = opts$bgen,
     bgenFileIndex = paste(opts$bgen, '.bgi', sep=''),
     subSampleFile = opts$sample,
@@ -36,14 +36,14 @@ SPAGMMATtest(
     groupFile = opts$annot,
     maxMAF_in_groupTest = c(0.05),
     MACCutoff_to_CollapseUltraRare = 5,
-    annotation_in_groupTest = c('synonymous', 'pLoF|pLoF|pLoF|pLoF;damaging_missense;damaging_missense|damaging_missense;pLoF|damaging_missense'),
+    annotation_in_groupTest = c('synonymous', 'pLoF;pLoF|pLoF', 'pLoF;pLoF|pLoF;damaging_missense;pLoF|damaging_missense;damaging_missense|damaging_missense', 'pLoF;pLoF|pLoF;damaging_missense;pLoF|damaging_missense;damaging_missense|damaging_missense;other_missense;pLoF|other_missense;damaging_missense|other_missense;other_missense|other_missense'),
     is_Firth_beta = TRUE,
-    pCutoffforSKAT = 0.01,
-    is_output_moreDetails = TRUE,
-    is_output_NA_in_groupTest = TRUE,
-    is_single_in_groupTest = TRUE,
+    pCutoffforFirth = 0.01,
     LOCO = FALSE,
-    is_fastTest = TRUE,
-    SAIGEOutputFile_rvTest = TRUE,
-    is_write_outcome = TRUE
+    SAIGEOutputFile = opts$out,
+    is_output_moreDetails = TRUE,
+    is_output_markerList_in_groupTest = TRUE,
+    is_single_in_groupTest = TRUE,
+    is_overwrite_output = TRUE
 )
+    # is_fastTest = TRUE,
