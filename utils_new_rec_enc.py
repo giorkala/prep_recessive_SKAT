@@ -1,6 +1,12 @@
 import numpy as np
 # from scipy.stats import beta
     
+def dummy_split(x):
+    if type(x)==tuple:
+        return ';'.join(x)
+    else:
+        return x
+    
 def write_saige_file(df, out_file, col_snp='SNP', col_gene='Gene', 
                      col_consq='Consq', col_weight='Weight'):
     # write the SAIGE group file to disk
@@ -30,22 +36,22 @@ rank_consq = {
     'pLoF|pLoF': 2,
     'pLoF|damaging_missense': 3,
     'damaging_missense|pLoF': 3,
-    'pLoF|other_missense': 4,
-    'other_missense|pLoF': 4,
-    'damaging_missense': 5,
-    'damaging_missense|damaging_missense': 6,
+    'damaging_missense': 4,
+    'damaging_missense|damaging_missense': 4,
+    'pLoF|other_missense': 5,
+    'other_missense|pLoF': 5,
     'damaging_missense|other_missense': 7,
     'other_missense|damaging_missense': 7,
     'other_missense': 8,
     'other_missense|other_missense': 9,
-    'pLoF|synonymous': 0,
-    'synonymous|pLoF': 0,
-    'damaging_missense|synonymous': 0,
-    'synonymous|damaging_missense': 0,
-    'other_missense|synonymous': 0,
-    'synonymous|other_missense': 0,
-    'synonymous': 0,
-    'synonymous|synonymous': 0
+    'pLoF|synonymous': 10,
+    'synonymous|pLoF': 10,
+    'damaging_missense|synonymous': 10,
+    'synonymous|damaging_missense': 10,
+    'other_missense|synonymous': 10,
+    'synonymous|other_missense': 10,
+    'synonymous': 10,
+    'synonymous|synonymous': 10
  }
 
 def get_worst_consequence(x, gene_annot):
@@ -111,10 +117,10 @@ new_weights = {
     'other_missense|other_missense': 2,
     'other_missense|damaging_missense': 2,
     'damaging_missense|other_missense': 2,
-    'damaging_missense|damaging_missense': 3,
     'other_missense|pLoF': 3,
     'pLoF|other_missense': 3,
     'damaging_missense': 4,
+    'damaging_missense|damaging_missense': 4,
     'pLoF|damaging_missense': 5,
     'damaging_missense|pLoF': 5,
     'pLoF|pLoF': 5,
@@ -126,16 +132,15 @@ def annot_relabelling(x):
 
 # weighting scemes - suggested: set_weights
 # to be used like df['weights'] = df.worst_consq.apply(lambda x: set_weights(x))
-
 def set_class_weights(x, new_weights=new_weights):
-    # return beta.pdf(new_weights[x], 1, 25)
     return new_weights[x]
     
-def set_uniform_weights(x):
-    return beta.pdf(1, 1, 25)
+### withdrawn/failed attempts ###
+# def set_uniform_weights(x):
+#     return beta.pdf(1, 1, 25)
 
-def set_af_weights(x):
-    return beta.pdf(x, 1, 25)
+# def set_af_weights(x):
+#     return beta.pdf(x, 1, 25)
 
-def set_random_weights(x):
-    return beta.pdf(np.random.rand()/20, 1, 25)
+# def set_random_weights(x):
+#     return beta.pdf(np.random.rand()/20, 1, 25)

@@ -20,13 +20,13 @@ import numpy as np
 import pandas as pd
 pd.options.mode.copy_on_write = True
 import argparse
-from utils_new_rec_enc import get_worst_consequence, get_freq_product, write_saige_file, set_class_weights
+from utils_new_rec_enc import get_worst_consequence, get_freq_product, write_saige_file, set_class_weights, dummy_split
 
 parser = argparse.ArgumentParser(description="Genotype preparation for Recessive SKAT v2.")
 parser.add_argument("--anno", "-a", help="file with variant-gene annotation (as in Regenie)", required=True, type=str)
 parser.add_argument("--chrom", "-c", help="chromosome index", required=True, type=int)
 parser.add_argument("--maf", "-m", help="file to MAFs", required=True, type=str, default=None)
-parser.add_argument("--maf_header", help="header available in the MAF file, e.g. if from PLINK", required=True, action='store_true', default=False)
+parser.add_argument("--maf_header", help="header available in the MAF file, e.g. if from PLINK", action='store_true', default=False)
 parser.add_argument("--genotypes", "-g", help="list of genotypes (output from call_chets)", required=False, type=str)
 parser.add_argument("--tag", "-t", help="marker identifier", required=True, type=str, default='nonsyn')
 parser.add_argument("--out", "-o", help="prefix for any output", required=True, type=str)
@@ -59,16 +59,19 @@ df = pd.read_csv( args.genotypes, sep='\t', header=None)
 df.columns= ['ID','CHR','Gene','GT','AC','Variants']
 
 ### 2. make a gene index ###
-# POS might not always work due to overlapping variants. I'll first use POS to rank genes, then assign a unique index to each gene.
+# Note: POS might not always work due to overlapping variants. 
+# Thus I first use POS to rank genes, then assign a unique index to each gene.
 df_annot['POS'] = [int(x.split(':')[1]) for x in df_annot['SNP']]
 gene_index = df_annot[['Gene','POS']].groupby('Gene').agg('min').reset_index()#.set_index('Gene')
 gene_index = gene_index.set_index('Gene').sort_values(by='POS')
-gene_index['geneID'] = [f'chr{C}:{i}' for i in range(1,gene_index.shape[0]+1)]
+gene_index['GeneID'] = [f'chr{C}:{i}' for i in range(1,gene_index.shape[0]+1)]
+# save the gene index for future reference
+gene_index[['GeneID','POS']].to_csv( output_prefix+'.gene_index.txt', sep='\t', index=True)
 
 print(f'\nWill work for chrom-{C}-{args.tag} with {gene_index.shape[0]} genes and {df_annot.shape[0]} (total) variants.')
 
 ## check if any two genes have overlapping POS
-if gene_index['geneID'].nunique() != gene_index.shape[0]:
+if gene_index['GeneID'].nunique() != gene_index.shape[0]:
     print('WARNING: overlapping gene IDs!')
 
 ### 3. go through all genotypes and assign a marker ID ###
@@ -90,16 +93,18 @@ for gene in gene_index.index:
     things = df_tmp.Variants.apply(lambda x: get_worst_consequence(x, gene_annot))
     df_tmp['worst_gtype'] = [x[0] for x in things]
     df_tmp['worst_consq'] = [x[1] for x in things]
+    # df_tmp['worst_gtype'] = [dummy_split(x[0]) for x in things]
 
     # make a table with info about each genotype
     df_sum = df_tmp[['worst_gtype','worst_consq']].value_counts().reset_index()
     df_sum.columns = ['worst_gtype','worst_consq','count']
-    df_sum['gtype_ID'] = [f'{gene_index.loc[gene].geneID}:{snp_tag}{i+1}' for i in range(df_sum.shape[0])]
+    df_sum['gtype_ID'] = [f'{gene_index.loc[gene].GeneID}:{snp_tag}{i+1}' for i in range(df_sum.shape[0])]
     df_sum['freq'] = df_sum.worst_gtype.apply(lambda x: get_freq_product(x, df_maf))
+    df_sum['variants'] = df_sum['worst_gtype'].apply(dummy_split)
     df_sum['Gene'] = gene
     # save the marker info
     df_markers = pd.concat([df_markers, df_sum[['gtype_ID', 'worst_consq', 'Gene']] ])
-    df_sum[['gtype_ID', 'worst_gtype', 'worst_consq', 'count', 'freq']].to_csv( output_prefix+'.marker_info.txt', 
+    df_sum[['gtype_ID', 'variants', 'worst_consq', 'count', 'freq']].to_csv( output_prefix+'.marker_info.txt', 
                                                                             mode='a', header=False, sep='\t', index=False)
 
     # update the original list of genotypes and save to disk
