@@ -1,24 +1,24 @@
-## Development of Recessive SKAT ##
-#### Genotype preparation based on pseudo-variants for biallelic genotypes. 
+## Framework for Recessive Sequence Kernel Association Testing (ReSKAT) ##
+Genotype preparation based on pseudo-variants for biallelic genotypes and association testing with SAIGE. Remember to change all required paths in the `Snakefile` and make sure all software is loaded appropriately.
+
+### Overview of framework
+This framework is developed as a Snakemake pipeline to streamline the preparation, with the following tasks:
+* Step 1: Detect all biallelic genotypes, obtain variant annotation and allele frequencies. Make sure [call_chets](https://github.com/frhl/call_chets) is installed and can be referenced.
+* Step 2: `prepare_new_rec_enc.py`
+    1. For each individual, select the genotype with the worst consequence and assign an identifier
+    2. Extract the frequency of the corresponding variant(s)
+    3. Assign weights and generate annotation files for SAIGE/Regenie
+* Step 3: `generate_vcf.py`; this is a simple way to create a VCF file based on the genotypes obtained previously, one per chromosome.
+* Step 4: Concatenate all VCFs to one file, then convert to BGEN for higher efficiency.
 
 Requirements:
-* biallelic genotypes (obtained from `call_chets`)
+* phased whole exome/genome sequencing data (post-QC)
 * variant annotation
 * allele frequencies
 * ranking of paired consequences, e.g. "pLOF|damaging" > "damaging|damaging"
 * collapsing criteria and weighting scheme for rare biallelic genotypes
     * any collapsing should follow the extraction of AF products, as we'll then need some sort of average
 * SAIGE step1 files (for association testing)
-
-### Overview of framework
-This framework is developed as a Snakemake pipeline to streamline the preparation, with the following tasks:
-* Step 0: Detect all biallelic genotypes, obtain variant annotation and allele frequencies
-* Step 1: `prepare_new_rec_enc.py`
-    1. For each individual, select the genotype with the worst consequence and assign an identifier
-    2. Extract the frequency of the corresponding variant(s)
-    3. Assign weights and generate annotation files for SAIGE/Regenie
-* Step 2: `generate_vcf.py`; this offers a quick way to create a VCF file based on the genotypes obtained previously, one per chromosome.
-* Step 3: Concatenate all VCFs to one file, then convert to BGEN for higher efficiency. Repeat for other annotation files.
 
 ### How to run
 ```
@@ -67,3 +67,7 @@ else
     echo "Sum-stat file already exists, nothing to do here!"
 fi
 ```
+
+### Troubleshooting
+* If the snakemake pipeline fails for some chromosomes (e.g. 1-3) but not others, try again after allocating more RAM.
+* Note that you need to delete all `*.txt` output files before running `prepare_new_rec_enc`, as some are incrementally updated meaning that the output will be appended in an existing file. In that case, you'll get an error while generating the VCF in the next step.
