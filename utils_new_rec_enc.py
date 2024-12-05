@@ -111,20 +111,20 @@ new_labels = {
 }
 
 new_weights = {
-    'synonymous|synonymous': 1,
-    'synonymous': 1,
-    'other_missense': 2,
-    'other_missense|other_missense': 2,
-    'other_missense|damaging_missense': 2,
-    'damaging_missense|other_missense': 2,
-    'other_missense|pLoF': 3,
-    'pLoF|other_missense': 3,
-    'damaging_missense': 4,
-    'damaging_missense|damaging_missense': 4,
-    'pLoF|damaging_missense': 5,
-    'damaging_missense|pLoF': 5,
-    'pLoF|pLoF': 5,
-    'pLoF': 5,
+    'synonymous|synonymous': 0.5,
+    'synonymous': 0.5,
+    'other_missense': 1,
+    'other_missense|other_missense': 1,
+    'other_missense|damaging_missense': 1,
+    'damaging_missense|other_missense': 1,
+    'other_missense|pLoF': 2,
+    'pLoF|other_missense': 2,
+    'damaging_missense': 2,
+    'damaging_missense|damaging_missense': 2,
+    'pLoF|damaging_missense': 3,
+    'damaging_missense|pLoF': 3,
+    'pLoF|pLoF': 4,
+    'pLoF': 4,
 }
 
 def annot_relabelling(x):
