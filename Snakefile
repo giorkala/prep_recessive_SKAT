@@ -141,7 +141,8 @@ rule run_all:
     output:
         bgen = final_prefix+".chrALL.bgen",
         vcf = final_prefix+".chrALL.vcf.gz",
-        sample = final_prefix+".chrALL.sample"
+        sample = final_prefix+".chrALL.sample",
+        annot = final_prefix+".chrALL.groupFile.txt",
     params:
         prefix = final_prefix
     resources:
@@ -166,4 +167,9 @@ rule run_all:
         head -2 {output.sample} > {output.sample}.tmp
         awk 'NR>2{{print 1,$2,0,0}}' {output.sample} >> {output.sample}.tmp
         mv {output.sample}.tmp {output.sample}
+
+        # and make chromosome-wide groupFile, marker_info, and gene_index files:
+        cat {params.prefix}.chr{1..22}.groupFile.txt > {output.annot}
+        cat {params.prefix}.chr{1..22}.marker_info.txt > {params.prefix}.chrALL.marker_info.txt
+        cat {params.prefix}.chr{1..22}.gene_index.txt > {params.prefix}.chrALL.gene_index.txt
         """

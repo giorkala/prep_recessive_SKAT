@@ -46,9 +46,12 @@ plink2 --export bgen-1.2 bits=8 --vcf $final_prefix.vcf.gz dosage=DS --out $fina
 head -2 $final_prefix.sample > $final_prefix.sample1
 awk 'NR>2{print 1,$2,0,0}' $final_prefix.sample >> $final_prefix.sample1
 mv $final_prefix.sample1 $final_prefix.sample
-# index the BGEN file
+# index the BGEN file:
 bgenix -index -g $final_prefix.bgen
-
+# and make chromosome-wide groupFile, marker_info, and gene_index files:
+cat $chr_vcf_prefix.chr{1..22}.groupFile.txt > $final_prefix.groupFile.txt
+cat $chr_vcf_prefix.chr{1..22}.marker_info.txt > $final_prefix.marker_info.txt
+cat $chr_vcf_prefix.chr{1..22}.gene_index.txt > $final_prefix.gene_index.txt
 ```
 ### Association testing with SAIGE
 When all the above steps are complete, you can proceed to association testing with SAIGE. For that you need to set the `model_prefix` (path to step-1 files), `grm_prefix`, `bgen`, `annotation`, and a `samples_file` (with the overlap between step-1 files and the bgen. Then you can invoke SAIGE as follows:
