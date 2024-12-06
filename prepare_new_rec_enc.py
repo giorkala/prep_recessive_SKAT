@@ -25,11 +25,11 @@ from utils_new_rec_enc import get_worst_consequence, get_freq_product, write_sai
 parser = argparse.ArgumentParser(description="Genotype preparation for Recessive SKAT v2.")
 parser.add_argument("--anno", "-a", help="file with variant-gene annotation (as in Regenie)", required=True, type=str)
 parser.add_argument("--chrom", "-c", help="chromosome index", required=True, type=int)
-parser.add_argument("--maf", "-m", help="file to MAFs", required=True, type=str, default=None)
-parser.add_argument("--maf_header", help="header available in the MAF file, e.g. if from PLINK", action='store_true', default=False)
 parser.add_argument("--genotypes", "-g", help="list of genotypes (output from call_chets)", required=False, type=str)
 parser.add_argument("--tag", "-t", help="marker identifier", required=True, type=str, default='nonsyn')
 parser.add_argument("--out", "-o", help="prefix for any output", required=True, type=str)
+# parser.add_argument("--maf", "-m", help="file to MAFs", required=True, type=str, default=None)
+# parser.add_argument("--maf_header", help="header available in the MAF file, e.g. if from PLINK", action='store_true', default=False)
 args = parser.parse_args()
 
 output_prefix=args.out
@@ -46,14 +46,14 @@ df_annot = pd.read_csv( args.anno, sep='\s+', names=['SNP','Gene','Consq'])
 df_annot.replace({'other_missense_or_protein_altering':'other_missense',
                   'damaging_missense_or_protein_altering':'damaging_missense'}, inplace=True)
 
-if args.maf_header:
-   df_maf = pd.read_csv( args.maf, sep='\t' ).set_index('ID')
-   assert 'MAF' in df_maf.columns, 'Mismatch with the MAF file header!'
-   df_maf['MAF'] = df_maf.ALT_FREQS.values
-else:
-   df_maf = pd.read_csv( args.maf, sep='\t', header=None).set_index(0)
-   # assuming MAF is the fourth column...
-   df_maf['MAF'] = df_maf[3] / df_maf[4] / 2
+# if args.maf_header:
+#    df_maf = pd.read_csv( args.maf, sep='\t' ).set_index('ID')
+#    assert 'MAF' in df_maf.columns, 'Mismatch with the MAF file header!'
+#    df_maf['MAF'] = df_maf.ALT_FREQS.values
+# else:
+#    df_maf = pd.read_csv( args.maf, sep='\t', header=None).set_index(0)
+#    # assuming MAF is the fourth column...
+#    df_maf['MAF'] = df_maf[3] / df_maf[4] / 2
 
 df = pd.read_csv( args.genotypes, sep='\t', header=None)
 df.columns= ['ID','CHR','Gene','GT','AC','Variants']
@@ -99,12 +99,12 @@ for gene in gene_index.index:
     df_sum = df_tmp[['worst_gtype','worst_consq']].value_counts().reset_index()
     df_sum.columns = ['worst_gtype','worst_consq','count']
     df_sum['gtype_ID'] = [f'{gene_index.loc[gene].GeneID}:{snp_tag}{i+1}' for i in range(df_sum.shape[0])]
-    df_sum['freq'] = df_sum.worst_gtype.apply(lambda x: get_freq_product(x, df_maf))
+    # df_sum['freq'] = df_sum.worst_gtype.apply(lambda x: get_freq_product(x, df_maf))
     df_sum['variants'] = df_sum['worst_gtype'].apply(dummy_split)
     df_sum['Gene'] = gene
     # save the marker info
     df_markers = pd.concat([df_markers, df_sum[['gtype_ID', 'worst_consq', 'Gene']] ])
-    df_sum[['gtype_ID', 'variants', 'worst_consq', 'count', 'freq']].to_csv( output_prefix+'.marker_info.txt', 
+    df_sum[['gtype_ID', 'variants', 'worst_consq', 'count',]].to_csv( output_prefix+'.marker_info.txt', 
                                                                             mode='a', header=False, sep='\t', index=False)
 
     # update the original list of genotypes and save to disk

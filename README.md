@@ -14,11 +14,11 @@ This framework is developed as a Snakemake pipeline to streamline the preparatio
 Requirements:
 * phased whole exome/genome sequencing data (post-QC)
 * variant annotation
-* allele frequencies
 * ranking of paired consequences, e.g. "pLOF|damaging" > "damaging|damaging"
 * collapsing criteria and weighting scheme for rare biallelic genotypes
     * any collapsing should follow the extraction of AF products, as we'll then need some sort of average
 * SAIGE step1 files (for association testing)
+* Update 6/12/24: No need for allele frequencies
 
 ### How to run
 ```

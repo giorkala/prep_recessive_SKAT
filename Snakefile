@@ -98,8 +98,8 @@ rule get_recessive_encoding:
     # Encode all biallelic gentypes to the new format, then make the corresponding annotation files
     input:
         genotypes = rules.generate_biallelic_genotypes.output.genotypes,
-        annot = rules.generate_biallelic_genotypes.output.var_annot,
-        maf_file = maf_prefix+".chr{chrom}.snpinfo"
+        annot = rules.generate_biallelic_genotypes.output.var_annot
+        # maf_file = maf_prefix+".chr{chrom}.snpinfo"
     output:
         genotypes = WORK_DIR+"/output/{TAG}.chr{chrom}.txt",
         annot = WORK_DIR+"/output/{TAG}.chr{chrom}.regenie_annotation.txt",
@@ -111,7 +111,7 @@ rule get_recessive_encoding:
     shell:
         """
         # first merge the two lists with annotations from the previous step
-        python prepare_new_rec_enc.py -c {params.C} -t merged -g {input.genotypes} -m {input.maf_file} -a {input.annot} -o {params.out_prefix}
+        python prepare_new_rec_enc.py -c {params.C} -t merged -g {input.genotypes} -a {input.annot} -o {params.out_prefix}
         """
 
 rule generate_vcf:
