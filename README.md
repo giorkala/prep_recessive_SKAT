@@ -74,3 +74,10 @@ fi
 ### Troubleshooting
 * If the snakemake pipeline fails for some chromosomes (e.g. 1-3) but not others, try again after allocating more RAM.
 * Note that you need to delete all `*.txt` output files before running `prepare_new_rec_enc`, as some are incrementally updated meaning that the output will be appended in an existing file. In that case, you'll get an error while generating the VCF in the next step.
+* In case SAIGE complains about sample overlap missmatches, you can create a file with the intersection between the VCF and the step1 file, then pass that using `--sample $samples_file`. Here's how to create this file:
+```
+if [ ! -f $samples_file ]; then
+    Rscript $red_dir/intersect_sampleIDs.R --vcfIDs $work_dir/samples.brava_s50.delta.txt --model $model_prefix.rda --out $samples_file
+fi
+```
+
