@@ -84,12 +84,12 @@ rule generate_biallelic_genotypes:
         python {params.prep_genemap} -a {input.annot} \
             -c pLoF damaging_missense_or_protein_altering other_missense_or_protein_altering \
             -o {output.var_annot} 
-        {params.call_chets} -g {input.genotypes} -m {output.var_annot} --show-variants | grep 'chet\|hom' > {output}
+        {params.call_chets} -g {input.genotypes} -m {output.var_annot} --show-variants | grep 'chet\|hom' > {output.genotypes}
 
         # repeat for synonymous variants, adding to the existing file
         annot_syn="{params.wd}/sandbox/annot.chr{wildcards.chrom}.syn.txt"
         python {params.prep_genemap} -a {input.annot} -c synonymous -o $annot_syn
-        {params.call_chets} -g {input.genotypes} -m $annot_syn --show-variants | grep 'chet\|hom' >> {output}
+        {params.call_chets} -g {input.genotypes} -m $annot_syn --show-variants | grep 'chet\|hom' >> {output.genotypes}
         cat $annot_syn >> {output.var_annot}
         rm $annot_syn
         """
