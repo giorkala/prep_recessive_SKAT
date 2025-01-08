@@ -35,6 +35,7 @@ SPAGMMATtest(
     sparseGRMSampleIDFile = paste(opts$grm, '.sampleIDs.txt', sep=''),
     groupFile = opts$annot,
     maxMAF_in_groupTest = c(0.05),
+    minGroupMAC_in_BurdenTest = 10,
     MACCutoff_to_CollapseUltraRare = 5,
     annotation_in_groupTest = c('synonymous', 'pLoF;pLoF|pLoF', 'pLoF;pLoF|pLoF;damaging_missense;pLoF|damaging_missense;damaging_missense|damaging_missense', 'pLoF;pLoF|pLoF;damaging_missense;pLoF|damaging_missense;damaging_missense|damaging_missense;other_missense;pLoF|other_missense;damaging_missense|other_missense;other_missense|other_missense'),
     is_Firth_beta = TRUE,
