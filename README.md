@@ -71,6 +71,13 @@ else
 fi
 ```
 
+### Association with the Additive-SKAT counterpart
+For that, first run `prepare_add_skat.py` to generate an annotation with the actual variants used to obtain the pseudo-markers and class-based weights. Then run SAIGE step-2 with that new file, the **raw genotypes**, while setting
+```
+annotation_in_groupTest = c('synonymous', 'pLoF', 'damaging_missense', 'other_missense', 'pLoF;damaging_missense', 'pLoF;damaging_missense;other_missense'),
+```
+for `SPAGMMATtest`; the other settings should be as usual (e.g. like above, or as in the main BraVa analysis). 
+
 ### Troubleshooting
 * If the snakemake pipeline fails for some chromosomes (e.g. 1-3) but not others, try again after allocating more RAM.
 * Note that you need to delete all `*.txt` output files before running `prepare_new_rec_enc`, as some are incrementally updated meaning that the output will be appended in an existing file. In that case, you'll get an error while generating the VCF in the next step.
