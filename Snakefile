@@ -121,18 +121,20 @@ rule generate_vcf:
         WORK_DIR+"/output/{TAG}.chr{chrom}.vcf.gz"
     params:
         samples = f"{WORK_DIR}/samples.bcf.txt",
+        out_prefix = f"{WORK_DIR}/{TAG}.chr{chrom}",
         C = lambda wildcards: wildcards.chrom
     shell:
         """
-        python generate_vcf.py -s {params.samples} -c {params.C} -g {input} -o {output}
+        python generate_vcf.py -s {params.samples} -c {params.C} -g {input} -o {out_prefix}
+        bgzip {out_prefix}
         """
 
 rule run_specific:
     input:
         expand(WORK_DIR+"/sandbox/chr{chrom}.PP90af05.txt.gz", chrom=range(1,23), tag={TAG}),
         expand(WORK_DIR+"/sandbox/biallelic.{tag}.merged.chr{chrom}.txt", chrom=range(1,23), tag={TAG}),
-        expand(WORK_DIR+"/output/{tag}.chr{chrom}.txt", chrom=range(20,23), tag={TAG}),
-        expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(22,23), tag={TAG})
+        expand(WORK_DIR+"/output/{tag}.chr{chrom}.txt", chrom=range(1,23), tag={TAG}),
+        expand(WORK_DIR+"/output/{tag}.chr{chrom}.vcf.gz", chrom=range(1,23), tag={TAG})
 
 rule run_all:
     # this needs bcftools and PLINK2; make sure these are available

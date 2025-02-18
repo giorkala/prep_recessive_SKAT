@@ -49,10 +49,12 @@ header=[
 "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" + '\t'.join( samples_all.index )
 ]
 
-import gzip
+# import gzip
+# save to uncompressed format, then compress with bgzip
 
 total_AC = 0
-with gzip.open( args.out, 'wb' ) as fout:
+# with gzip.open( args.out, 'wb' ) as fout:
+with open( args.out, 'w' ) as fout:
     fout.write('\n'.join(header).encode())
     
     for i, snp in enumerate(geno_markers_dict.keys()):
